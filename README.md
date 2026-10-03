@@ -1,30 +1,37 @@
 # Cortex
 
-**LLM Pet Brain** — NLP service for dynamic, unscripted pet conversations across all 210 species.
+**Conversation that sounds like your pet.**
 
-Part of [ComputerPets](https://github.com/RicheyWorks/computerpets). Map: [computerpets-ecosystem](https://github.com/RicheyWorks/computerpets-ecosystem).
+A planned pet dialogue service using species personas, care events, short-term memory, and defined fallback behavior.
 
-| | |
+**Stage: design scaffold.** This checkout contains a design document and a source placeholder. The experience below is planned; there is no runnable app or integrated service yet.
+
+[Status](#status) · [Planned experience](#planned-experience) · [Contributor quickstart](#contributor-quickstart) · [Service contract](docs/CONTRACT.md) · [Ecosystem map](https://github.com/RicheyWorks/computerpets-ecosystem)
+
+## Status
+
+| Available today | What you can inspect |
 | --- | --- |
-| Status | Design scaffold — contract frozen, implementation next |
-| License | MIT |
-| First pet | Still [Rui on the desktop](https://github.com/RicheyWorks/computerpets/blob/main/docs/START-HERE.md). This organ is optional. |
+| [Service contract](docs/CONTRACT.md) | Intended behavior, boundaries, and planned dependencies. |
+| [Source placeholder](src/cortex/__init__.py) | Package metadata at version 0.0.0; no application entry point or packaging manifest is checked in. |
+| [MIT license](LICENSE) | Licensing terms for the repository. |
 
-## The job
+Gameplay, endpoints, integration arrows, and failure handling on this page describe implementation targets. No build/test harness, CI workflow, or product screenshots are included in this scaffold.
 
-Turns hunger, mood, lineage, and player context into in-character speech. Rui does not lecture. A clownfish does not talk like a frog. Cortex is the mouth of the overlay.
+## Planned experience
 
-The flagship overlay already puts a living sticker on the real desktop (Rui first, 210 kinds). Cortex does not replace that. It is one organ.
+- POST /v1/speak — given petId + event (fed, poked, ignored), return a line + emotion tag
+- POST /v1/chat — multi-turn player chat with a species system prompt and short-term memory
+- GET /v1/persona/{speciesId} — locked voice, vocabulary, taboo list for that animal
+- POST /v1/moderate — drop or rewrite lines that break canon or safety policy
 
-## Who uses it
+### Planned technology
 
-Overlay + Companion when a pet should talk. Not the player-facing website.
+Python 3.12 · FastAPI · xAI Grok / local vLLM · Redis session memory · gRPC to the desktop client
 
-## What it is not
+### Planned connections
 
-Not a general chatbot. Not a replacement for the desktop pet. Will not invent a 211th species.
-
-## Architecture
+These arrows show intended dependencies, rather than working integrations.
 
 ```mermaid
 flowchart LR
@@ -34,82 +41,47 @@ flowchart LR
   cortex -->|text bubble| overlay
 ```
 
-## Stack
+## Contributor quickstart
 
-Python 3.12 · FastAPI · xAI Grok / local vLLM · Redis session memory · gRPC to the desktop client
+With access to this private repository, Git and PowerShell are enough to review the scaffold:
 
-GroupId / namespace: `com.enterprisepet.cortex`  
-Default listen: `8091`
+```powershell
+git clone https://github.com/RicheyWorks/computerpets-cortex.git
+Set-Location computerpets-cortex
+Get-Content docs/CONTRACT.md
+Get-Content src/cortex/__init__.py
+```
 
-## Contract
+Read [Service contract](docs/CONTRACT.md) before choosing implementation details. The commands above inspect the checked-in files; app installation, editor launch, and server startup become possible after a buildable project and entry point are added.
 
-### Data
-
-`Persona(speciesId, voice, temperament, taboo[]) · Utterance(petId, text, emotion, seed) · MemoryWindow(petId, turns[8])`
-
-### Surface
-
-- POST /v1/speak — given petId + event (fed, poked, ignored), return a line + emotion tag
-- POST /v1/chat — multi-turn player chat with a species system prompt and short-term memory
-- GET /v1/persona/{speciesId} — locked voice, vocabulary, taboo list for that animal
-- POST /v1/moderate — drop or rewrite lines that break canon or safety policy
-
-### Failure doctrine
-
-Model timeout → canned species bark. Safety trip → silent emote only. Unknown species → generic 'critter' prompt, never another animal's voice.
-
-## First slice
-
-Build this and stop. Do not boil the ocean.
+### First implementation target
 
 **Rui persona JSON + `POST /v1/speak` for fed/poked/ignored. Three canned fallbacks if the model is down.**
 
 You know it works when: Rui and Paint never share a sentence. Timeout returns a bark, HTTP 200. Unknown speciesId returns critter, never 'red panda'.
 
-## Environment
+Treat this as an acceptance target for a future implementation. Start with the documented slice, add the required project setup and focused tests, and update these instructions with commands that work from a fresh clone.
 
-`XAI_API_KEY` (or `VLLM_URL`), `REDIS_URL`, `LORE_URL`
+## Design boundaries
 
-Never commit secrets. Never put Steam or chain keys in the overlay.
+- Stay canon with 210 species. No illegal hybrids. No swapped voices.
+- Treat the desktop overlay as the main quest. This organ is optional until wired.
+- Fail soft: the overlay keeps walking if this service is down, unless this *is* the overlay.
+- No PII in public artifacts (Steam id, wallet, home path, webcam frames).
 
-## Neighbors
+**Required failure behavior:**
 
-- computerpets (desktop + Spring backend)
-- computerpets-vox (spoken replies)
-- computerpets-quests (daily prompts)
-- computerpets-lore (canon facts)
+Model timeout → canned species bark. Safety trip → silent emote only. Unknown species → generic 'critter' prompt, never another animal's voice.
 
-## Layout
+## Ecosystem
 
-```
-computerpets-cortex/
-  README.md           this file
-  LICENSE             MIT
-  docs/CONTRACT.md    the same contract, frozen for implementers
-  src/                implementation lands here
-```
+- [computerpets](https://github.com/RicheyWorks/computerpets) (desktop + Spring backend)
+- [computerpets-vox](https://github.com/RicheyWorks/computerpets-vox) (spoken replies)
+- [computerpets-quests](https://github.com/RicheyWorks/computerpets-quests) (daily prompts)
+- [computerpets-lore](https://github.com/RicheyWorks/computerpets-lore) (canon facts)
 
-## Run (Windows)
-
-PowerShell, from this folder, after the flagship helpers (Git, Node LTS 22+, JDK 21 as needed):
-
-```powershell
-python -m venv .venv; .\.venv\Scripts\Activate.ps1; pip install -e .; uvicorn cortex.app:app --port 8091
-```
-
-You do not need this service to meet Rui. The [flagship start-here](https://github.com/RicheyWorks/computerpets/blob/main/docs/START-HERE.md) is still the first pet.
-
-## Links
-
-- Flagship: [RicheyWorks/computerpets](https://github.com/RicheyWorks/computerpets)
-- This repo: [RicheyWorks/computerpets-cortex](https://github.com/RicheyWorks/computerpets-cortex)
-- Map: [RicheyWorks/computerpets-ecosystem](https://github.com/RicheyWorks/computerpets-ecosystem)
-- Contract file: [docs/CONTRACT.md](docs/CONTRACT.md)
+Start with the [ComputerPets flagship](https://github.com/RicheyWorks/computerpets) for the desktop pet. This repository describes an optional extension; the [ecosystem map](https://github.com/RicheyWorks/computerpets-ecosystem) explains the broader plan.
 
 ## License
 
 MIT. See [LICENSE](LICENSE).
-
----
-
-*Two hundred ten living kinds. Keep them so a line does not go quiet.*
